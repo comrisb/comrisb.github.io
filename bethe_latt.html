@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Single-band Bethe lattice &#8212; ComRISB totutial 2021.06.24 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Checkboard lattice" href="checkboard.html" />
+    <link rel="prev" title="ComRISB Tutorials" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="checkboard.html" title="Checkboard lattice"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="ComRISB Tutorials"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">ComRISB totutial 2021.06.24 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Single-band Bethe lattice</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="single-band-bethe-lattice">
+<h1>Single-band Bethe lattice<a class="headerlink" href="#single-band-bethe-lattice" title="Permalink to this headline">¶</a></h1>
+<p>In this example, we study a special one-band Hubbard model,
+which has semi-circular noninteracting density of states (DOS),
+It corresponds to Bethe lattice with infinite coordination number.
+You will learn:</p>
+<ul class="simple">
+<li><p>How to set up a simple model calculation</p></li>
+<li><p>How the correlation strength induces metal-insulator transition
+in the Gutzwiller-slave-boson theory</p></li>
+<li><p>How to determine the energy gap for the Mott-insulating phase</p></li>
+</ul>
+<p>There is predefined class,
+which helps generating the energy mesh with uniform weight.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="pygrisb.model.special.semicircular">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">pygrisb.model.special.</span></span><span class="sig-name descname"><span class="pre">semicircular</span></span><a class="reference internal" href="_modules/pygrisb/model/special.html#semicircular"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygrisb.model.special.semicircular" title="Permalink to this definition">¶</a></dt>
+<dd><p>semi-circular DOS.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pygrisb.model.special.semicircular.get_e_list_of_uniform_wt">
+<span class="sig-name descname"><span class="pre">get_e_list_of_uniform_wt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nmesh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygrisb/model/special.html#semicircular.get_e_list_of_uniform_wt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygrisb.model.special.semicircular.get_e_list_of_uniform_wt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the energy mesh with uniform weight.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p>In the model, we use half-band width as the energy unit.
+The noninteracting DOS and cumulative dos is shown as below:</p>
+<a class="reference internal image-reference" href="_images/semicir_dos.png"><img alt="semicircular dos and cdos" class="align-center" src="_images/semicir_dos.png" style="width: 640.0px; height: 480.0px;" /></a>
+<p>A function to setup the model for <em>CyGutz</em> calculation
+has been defined,</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pygrisb.model.semicir.gutz_model_setup">
+<span class="sig-prename descclassname"><span class="pre">pygrisb.model.semicir.</span></span><span class="sig-name descname"><span class="pre">gutz_model_setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nmesh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iembeddiag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_e</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ensemble</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygrisb/model/semicir.html#gutz_model_setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygrisb.model.semicir.gutz_model_setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up Gutzwiller calculations for 1-band model with semi-circular DOS.</p>
+<p>Parameters:</p>
+<ul class="simple">
+<li><p>u: real number
+Hubbard U.</p></li>
+<li><p>nmesh: interger number
+number of energy mesh</p></li>
+<li><p>mu: real number
+chemical potential</p></li>
+</ul>
+<p>Result:</p>
+<p>Create all the necessary input file of <code class="docutils literal notranslate"><span class="pre">GParam.h5</span></code>, <code class="docutils literal notranslate"><span class="pre">GBareH.h5</span></code>
+for <em>CyGutz</em> calculation.</p>
+</dd></dl>
+
+<p>For convenience, we have also predefined a function
+to run <em>CyGutz</em> for a list of Hubbard <span class="math notranslate nohighlight">\(U\)</span>
+or chemical potential <span class="math notranslate nohighlight">\(\mu\)</span>,</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pygrisb.model.test.scan_semicirc.generate_data">
+<span class="sig-prename descclassname"><span class="pre">pygrisb.model.test.scan_semicirc.</span></span><span class="sig-name descname"><span class="pre">generate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygrisb/model/test/scan_semicirc.html#generate_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygrisb.model.test.scan_semicirc.generate_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>run <em>CyGutz</em> calculations for a list of U and mu.
+save the results in results.</p>
+<p>Parameters:</p>
+<ul class="simple">
+<li><p>u_list: real array
+list of Hubbard U parameters.</p></li>
+<li><p>mu_list: real array
+list of chemical potential</p></li>
+</ul>
+<p>Result:</p>
+<p>save the list of energies (e_list), double occupancy (d_list),
+quasi-particle weight (z_list) and occupation (n_list)
+to <code class="docutils literal notranslate"><span class="pre">result.dat</span></code> text file as well as the <code class="docutils literal notranslate"><span class="pre">result.h5</span></code> hdf5 file.</p>
+</dd></dl>
+
+<p>Let us first look at the case of <span class="math notranslate nohighlight">\(\mu=0\)</span>,
+i.e., in the particle-hole symmetric case.
+Let us perform a series of <em>CyGutz</em> calculations with increasing <span class="math notranslate nohighlight">\(U\)</span>,
+and check the behavior of the total energy, double occupancy,
+and quasi-particle weight (Z=:math:<cite>R^dagger R</cite>).
+Recall that in Gutzwiller-slave boson theory,
+Z=0 implies the system is in the Mott insulating phase,
+where all the spectral weight becomes non-coherent.</p>
+<p>A script for a job of scanning <span class="math notranslate nohighlight">\(U\)</span> is defined as</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pygrisb.model.test.scan_semicirc.scan_u">
+<span class="sig-prename descclassname"><span class="pre">pygrisb.model.test.scan_semicirc.</span></span><span class="sig-name descname"><span class="pre">scan_u</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygrisb/model/test/scan_semicirc.html#scan_u"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygrisb.model.test.scan_semicirc.scan_u" title="Permalink to this definition">¶</a></dt>
+<dd><p>run <em>CyGutz</em> calculations for a list of U for a given mu.</p>
+<p>Parameters:</p>
+<ul class="simple">
+<li><p>mu: real number
+the fixed chemical potential.</p></li>
+</ul>
+<p>Result:</p>
+<p>it will generate results for a u_list of np.arange(0.0, 5.1, 0.2)
+at fixed mu.</p>
+</dd></dl>
+
+<p>For a hands-on practice, assuminig your current directory
+is <em>comrisb_tutorial/tutorials/Bethe_Latt/</em>,
+type the following command to run the job:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ mkdir -p work &amp;&amp; cd work
+$ python ../scan_semicirc.py
+</pre></div>
+</div>
+<p>It will automatically generate the following results:</p>
+<a class="reference internal image-reference" href="_images/edzu1.png"><img alt="e/d/z vs u" class="align-center" src="_images/edzu1.png" style="width: 600.0px; height: 600.0px;" /></a>
+<p>One can see that the <span class="math notranslate nohighlight">\(U_{c}\)</span> ~ 3.4 for the metal-insulator transition.</p>
+<p>Although the theory gives a very simplified picture of the Mott insulator,
+i.e., double occupancy or quasi-particle weight is 0,
+it is possible to get the band gap size by varying the chemical potential.</p>
+<p>A script for a job of scanning <span class="math notranslate nohighlight">\(\mu\)</span> at <span class="math notranslate nohighlight">\(U=5\)</span> is defined as</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pygrisb.model.test.scan_semicirc.scan_mu">
+<span class="sig-prename descclassname"><span class="pre">pygrisb.model.test.scan_semicirc.</span></span><span class="sig-name descname"><span class="pre">scan_mu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygrisb/model/test/scan_semicirc.html#scan_mu"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygrisb.model.test.scan_semicirc.scan_mu" title="Permalink to this definition">¶</a></dt>
+<dd><p>run <em>CyGutz</em> calculations for a list of mu for a given u.</p>
+<p>Parameters:</p>
+<ul class="simple">
+<li><p>u: real number
+the fixed Hubbard U</p></li>
+</ul>
+<p>Result:</p>
+<p>it will generate results for a mu_list = np.arange(0.0, 3.1, 0.1)
+at fixed u.</p>
+</dd></dl>
+
+<p>Stay in the same <em>work</em> directory
+and type the following command for calculations to get the band gap:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python ../scan_semicirc.py -mu
+</pre></div>
+</div>
+<p>It will automatically generate the following results:</p>
+<a class="reference internal image-reference" href="_images/edznmu_u5.png"><img alt="e/d/z/n vs mu" class="align-center" src="_images/edznmu_u5.png" style="width: 600.0px; height: 600.0px;" /></a>
+<p>One can see that the physical quantities of interest stay constant
+in the gap region.
+When <span class="math notranslate nohighlight">\(\mu\)</span> increases over ~ 1.4,
+the orbital occupation <span class="math notranslate nohighlight">\(n\)</span> starts to decrease,
+indicating the gap size ~ 1.4*2 = 2.8.
+The factor of 2 comes from  particle-hole symmetry.</p>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">ComRISB Tutorials</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="checkboard.html"
+                        title="next chapter">Checkboard lattice</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/bethe_latt.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="checkboard.html" title="Checkboard lattice"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="ComRISB Tutorials"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">ComRISB totutial 2021.06.24 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Single-band Bethe lattice</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Yongxin Yao.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.2.
+    </div>
+  </body>
+</html>

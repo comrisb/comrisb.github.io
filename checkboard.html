@@ -1,0 +1,277 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checkboard lattice &#8212; ComRISB totutial 2021.06.24 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Single-band Bethe lattice" href="bethe_latt.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="bethe_latt.html" title="Single-band Bethe lattice"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">ComRISB totutial 2021.06.24 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Checkboard lattice</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="checkboard-lattice">
+<h1>Checkboard lattice<a class="headerlink" href="#checkboard-lattice" title="Permalink to this headline">¶</a></h1>
+<p>In this example, we study 2-dimensional checkerboard lattice
+with nearest neighbor hopping.
+You will learn:</p>
+<ul class="simple">
+<li><p>How to set up a finite dimension (here 2D) lattice with multiple sites
+per unit cell.</p></li>
+<li><p>How to setup simple antiferromagnetic (AFM) calculations.</p></li>
+<li><p>How the Gutzwiller method improves the descriptions
+at Hartree-Fock mean field level.</p></li>
+</ul>
+<p>In the model, we use nearest neighbor hopping <span class="math notranslate nohighlight">\(t\)</span> as the energy unit.
+A function to setup the model for <em>CyGutz</em> calculation has been defined,</p>
+<span class="target" id="gutz-model-setup"></span><dl class="py function">
+<dt class="sig sig-object py" id="pygrisb.model.checkboard.gutz_model_setup">
+<span class="sig-prename descclassname"><span class="pre">pygrisb.model.checkboard.</span></span><span class="sig-name descname"><span class="pre">gutz_model_setup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spindeg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_e</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iembeddiag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygrisb/model/checkboard.html#gutz_model_setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygrisb.model.checkboard.gutz_model_setup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set up Gutzwiller calculations for 2d body-centered square lattice.</p>
+<p>Parameters:</p>
+<ul class="simple">
+<li><p>u: real number
+Hubbard U.</p></li>
+<li><p>spindeg: boolean number
+whether to keep spin degeneracy or not.</p></li>
+<li><p>num_e: real number
+number of electron per unit cell</p></li>
+<li><p>iembeddiag: integer
+flag for method to solve the embedding Hamiltonian.</p>
+<ul>
+<li><p>-3: valence truncation ED with S=0 (spin-singlet) constraint;</p></li>
+<li><p>-1: valence truncation ED;</p></li>
+<li><p>10: Hartree-Fock.</p></li>
+</ul>
+</li>
+</ul>
+<p>Result:</p>
+<p>Create all the necessary input file of <code class="docutils literal notranslate"><span class="pre">GBareH.h5</span></code> and <code class="docutils literal notranslate"><span class="pre">GParam.h5</span></code>
+for <em>CyGutz</em> calculation.</p>
+</dd></dl>
+
+<p>For convenience, we have also predefined a function
+to run <em>CyGutz</em> for a list of Hubbard <span class="math notranslate nohighlight">\(U\)</span>
+in paramagnetic (PM) or AFM phase.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pygrisb.model.test.scan_checkboard.generate_data">
+<span class="sig-prename descclassname"><span class="pre">pygrisb.model.test.scan_checkboard.</span></span><span class="sig-name descname"><span class="pre">generate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">u_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spindeg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'result'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iembeddiag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygrisb/model/test/scan_checkboard.html#generate_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygrisb.model.test.scan_checkboard.generate_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>run <em>CyGutz</em> calculations for a list of U.</p>
+<p>Parameters:</p>
+<ul class="simple">
+<li><p>u_list: real array
+list of Hubbard U parameters.</p></li>
+<li><p>spindeg: boolean number
+whether to keep spin degeneracy or not.</p></li>
+<li><p>fname: string
+file name to store the results.</p></li>
+<li><p>iembeddiag: integer
+flag for method to solve the embedding Hamiltonian.</p>
+<ul>
+<li><p>-3: valence truncation ED with S=0 (spin-singlet) constraint;</p></li>
+<li><p>-1: valence truncation ED;</p></li>
+<li><p>10: Hartree-Fock.</p></li>
+</ul>
+</li>
+</ul>
+<p>Result:</p>
+<p>save the list of energies (e_list), double occupancy (d_list),
+quasi-particle weight (z_list), magnetic moment (m_list),
+to <code class="docutils literal notranslate"><span class="pre">fname.dat</span></code> text file as well as the <code class="docutils literal notranslate"><span class="pre">fname.h5</span></code> hdf5 file.</p>
+</dd></dl>
+
+<p>Let us perform a series of <em>CyGutz</em> calculations with increasing <span class="math notranslate nohighlight">\(U\)</span>
+in the PM phase,
+and check the behavior of the total energy, double occupancy,
+and quasi-particle weight (Z),
+in a similar way as in the example of Bethe lattice.
+Recall that in Gutzwiller-RISB theory,
+Z=0 implies the system is in the Mott insulating phase,
+where all the spectral weight becomes non-coherent.</p>
+<p>A script for a job of scanning <span class="math notranslate nohighlight">\(U\)</span> in PM phase is defined as</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="pygrisb.model.test.scan_checkboard.scan_u">
+<span class="sig-prename descclassname"><span class="pre">pygrisb.model.test.scan_checkboard.</span></span><span class="sig-name descname"><span class="pre">scan_u</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spindeg</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iembeddiag</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'result'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pygrisb/model/test/scan_checkboard.html#scan_u"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pygrisb.model.test.scan_checkboard.scan_u" title="Permalink to this definition">¶</a></dt>
+<dd><p>run <em>CyGutz</em> calculations for a list of U.</p>
+<p>Result:</p>
+<p>it will generate results for a u_list of np.arange(0.0, 5.1, 0.2).</p>
+</dd></dl>
+
+<p>For a hands-on practice, from the directory
+<em>comrisb_tutorial/tutorials/checkboard_latt</em>
+type the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ mkdir -p work &amp;&amp; cd work
+$ python ../scan_checkboard.py
+</pre></div>
+</div>
+<p>It will automatically generate the following results:</p>
+<a class="reference internal image-reference" href="_images/checkboard_pm.png"><img alt="e/d/z/m vs u" class="align-center" src="_images/checkboard_pm.png" style="width: 640.0px; height: 480.0px;" /></a>
+<p>One can see similar generic feature of the local physical quantities
+as in the previous Bethe lattice calculations,
+albeit a larger <span class="math notranslate nohighlight">\(U_{c}\)</span> ~ 13 for the metal-insulator transition.</p>
+<p>Now let us perform a similar scan of <span class="math notranslate nohighlight">\(U\)</span> for the checkerboard AFM phase,
+i.e., there are two sublattices with up and down local spin moment.</p>
+<p>Type the same command with an inline argument of ‘-sp’ to trigger
+the setup of AFM phase:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python ../scan_checkboard.py -sp
+</pre></div>
+</div>
+<p>Here the user is advised to review the previous function <a class="reference internal" href="#gutz-model-setup">gutz_model_setup</a>.</p>
+<p>where spindeg changes to <code class="docutils literal notranslate"><span class="pre">False</span></code> by the inline argument ‘-sp’,
+and ‘updn_full_list=[1,-1]’ will be used in the <code class="docutils literal notranslate"><span class="pre">batch_initialize</span></code>.
+The following figure will be automatically generated:</p>
+<a class="reference internal image-reference" href="_images/checkboard_afm.png"><img alt="e/d/z/m vs u -- AFM" class="align-center" src="_images/checkboard_afm.png" style="width: 640.0px; height: 480.0px;" /></a>
+<p>One can see that the local spin moment <span class="math notranslate nohighlight">\(&lt;S_{z}&gt;\)</span> rises from zero
+with increasing <span class="math notranslate nohighlight">\(U\)</span>, and saturates at 1,
+as a half-filling single-orbital system.
+The kinetic energy renormalization factor <span class="math notranslate nohighlight">\(Z\)</span>
+shows a non-monotonic behavior – result of a competition
+between the effect of increasing onsite interaction,
+which will reduce <span class="math notranslate nohighlight">\(Z\)</span>, and that of approaching empty/full filling
+of the single spin-orbital channels,
+evidenced by the rising local spin moment,
+as it is defined as <span class="math notranslate nohighlight">\(&lt;S_{z}&gt; = &lt;n_up&gt; - &lt;b_dn&gt;\)</span>.</p>
+<p>To compare the results of PM and AFM phase, type:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python ../plot_pmafm.py
+</pre></div>
+</div>
+<p>One would get the following figure:</p>
+<a class="reference internal image-reference" href="_images/checkboard_pmafm.png"><img alt="e/d/z/m vs u -- PM &amp; AFM" class="align-center" src="_images/checkboard_pmafm.png" style="width: 640.0px; height: 480.0px;" /></a>
+<p>It is clear that the magnetically ordered AFM phase has lower energy
+than the PM phase. As compared with PM solutions, the kinetic energy
+renormalization factor <span class="math notranslate nohighlight">\(Z\)</span> only changes marginally in the AFM phase.
+The local double occupancy decreases smoothly in a nonlinear way
+in AFM phase, in contrast to the linear decreasing in PM phase.</p>
+<p>One would be interesting to see how the AFM solution
+obtained in the Gutzwiller method
+compare with the results from simple Hartree-Fock (HF) mean-field approach.
+The HF-type calculations can be conveniently be performed by typing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python ../scan_checkboard.py -uhf
+</pre></div>
+</div>
+<p>where the inline argument ‘-uhf’ changes the flag of <cite>iembeddiag</cite> to 10,
+corresponding to solve the embedding Hamiltonian of the Gutzwiller method
+at HF level.
+Upon execution of the above command,
+the following figure will be generated:</p>
+<a class="reference internal image-reference" href="_images/checkboard_afm_uhf.png"><img alt="e/d/z/m vs u -- AFM-HF" class="align-center" src="_images/checkboard_afm_uhf.png" style="width: 640.0px; height: 480.0px;" /></a>
+<p>One can see similar features as the results based on Gutzwiller calculations,
+but here the kinetic energy renormalization factor <span class="math notranslate nohighlight">\(Z\)</span> is a constant 1.</p>
+<p>To compare the three calculations results together, type:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python ../plot_pmafm_gh.py
+</pre></div>
+</div>
+<p>The following figure will be produced:</p>
+<a class="reference internal image-reference" href="_images/checkboard_pmafm_gh.png"><img alt="e/d/z/m vs u -- PM, AFM (G, HF)" class="align-center" src="_images/checkboard_pmafm_gh.png" style="width: 640.0px; height: 480.0px;" /></a>
+<p>As one can see, the Gutzwiller AFM solutions show much smoother variation
+of the local double occupancy, reduced local spin moment and smaller kinetic
+energy renormalization factor <span class="math notranslate nohighlight">\(Z\)</span>, and lower in total energy,
+in comparison with HF results.
+It is consistent with the respect of variational principle,
+because the Gutzwiller approach provides more variational degrees of freedom
+by local Gutzwiller correlator.</p>
+<p>One might be actually surprised for seeing that the spin-unrestricted HF (UHF)
+results are not bad, although HF method is known to not able to
+describe strong electron correlation effects.
+The reason is that here we are looking at the symmetry breaking solutions,
+where the <code class="docutils literal notranslate"><span class="pre">static</span> <span class="pre">correlation</span></code> due to the presence of (almost)
+degenerate ground states has been removed.
+In order yo visualize the <code class="docutils literal notranslate"><span class="pre">static</span> <span class="pre">correlcation</span></code> error in HF method,
+one can check the HF PM solutions. Typing the following commands:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python ../scan_checkboard.py -rhf
+</pre></div>
+</div>
+<p>The following results will be shown:</p>
+<a class="reference internal image-reference" href="_images/checkboard_pm_rhf.png"><img alt="e/d/z/m vs u -- PM, AFM (G, HF)" class="align-center" src="_images/checkboard_pm_rhf.png" style="width: 640.0px; height: 480.0px;" /></a>
+<p>One can clearly see the constant double occupancy
+and the consequent linear increasing of the total energy
+in the spin-restricted HF (RHF) calculations.</p>
+<p>Finally, for comparisons with all calculations, type:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python ../plot_pmafm_gh2.py
+</pre></div>
+</div>
+<p>The following produced figure clearly
+shows the static correlation error of RHF,
+as the RHF total energy deviates more and more with increasing <span class="math notranslate nohighlight">\(U\)</span>.</p>
+<a class="reference internal image-reference" href="_images/checkboard_pmafm_gh2.png"><img alt="e/d/z/m vs u -- PM, AFM (G, HF)" class="align-center" src="_images/checkboard_pmafm_gh2.png" style="width: 640.0px; height: 480.0px;" /></a>
+<p>This concludes the tutorals for model calculations.</p>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="bethe_latt.html"
+                        title="previous chapter">Single-band Bethe lattice</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/checkboard.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="bethe_latt.html" title="Single-band Bethe lattice"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">ComRISB totutial 2021.06.24 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Checkboard lattice</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Yongxin Yao.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.2.
+    </div>
+  </body>
+</html>

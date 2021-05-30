@@ -1,0 +1,293 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pygrisb.model.test.scan_checkboard &#8212; ComRISB totutial 2021.06.24 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/classic.css" />
+    
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">ComRISB totutial 2021.06.24 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pygrisb.model.test.scan_checkboard</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pygrisb.model.test.scan_checkboard</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">pygrisb.model</span> <span class="kn">import</span> <span class="n">checkboard</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">&#39;backend&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Qt5Agg&quot;</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+
+<div class="viewcode-block" id="generate_data"><a class="viewcode-back" href="../../../../checkboard.html#pygrisb.model.test.scan_checkboard.generate_data">[docs]</a><span class="k">def</span> <span class="nf">generate_data</span><span class="p">(</span><span class="n">u_list</span><span class="p">,</span> <span class="n">spindeg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s1">&#39;result&#39;</span><span class="p">,</span> <span class="n">iembeddiag</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;run *CyGutz* calculations for a list of U.</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">    * u_list: real array</span>
+<span class="sd">      list of Hubbard U parameters.</span>
+<span class="sd">    * spindeg: boolean number</span>
+<span class="sd">      whether to keep spin degeneracy or not.</span>
+<span class="sd">    * fname: string</span>
+<span class="sd">      file name to store the results.</span>
+<span class="sd">    * iembeddiag: integer</span>
+<span class="sd">      flag for method to solve the embedding Hamiltonian.</span>
+
+<span class="sd">      * -3: valence truncation ED with S=0 (spin-singlet) constraint;</span>
+<span class="sd">      * -1: valence truncation ED;</span>
+<span class="sd">      * 10: Hartree-Fock.</span>
+
+<span class="sd">    Result:</span>
+
+<span class="sd">    save the list of energies (e_list), double occupancy (d_list),</span>
+<span class="sd">    quasi-particle weight (z_list), magnetic moment (m_list),</span>
+<span class="sd">    to ``fname.dat`` text file as well as the ``fname.h5`` hdf5 file.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># get *CyGutz* command. Choose option &#39;-r -1&#39; to skip the claculation of</span>
+    <span class="c1"># Gutzwiller renormalized electron density.</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;WIEN_GUTZ_ROOT2&#39;</span><span class="p">]</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span><span class="n">root</span><span class="o">+</span><span class="s1">&#39;/CyGutz&#39;</span><span class="p">,</span> <span class="s1">&#39;-r&#39;</span><span class="p">,</span> <span class="s1">&#39;-1&#39;</span><span class="p">,</span> <span class="s1">&#39;-n&#39;</span><span class="p">,</span> <span class="s1">&#39;500&#39;</span><span class="p">]</span>
+
+    <span class="c1"># set Hubbard U=0</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="mf">0.</span>
+
+    <span class="c1"># remove pre-existing Gutzwiller setup files.</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;ginit.h5&#39;</span><span class="p">,</span> <span class="s1">&#39;GPARAM.h5&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="c1"># generate input files with updated with u=0</span>
+    <span class="n">checkboard</span><span class="o">.</span><span class="n">gutz_model_setup</span><span class="p">(</span><span class="n">u</span><span class="o">=</span><span class="n">u</span><span class="p">,</span> <span class="n">spindeg</span><span class="o">=</span><span class="n">spindeg</span><span class="p">,</span> <span class="n">iembeddiag</span><span class="o">=</span><span class="n">iembeddiag</span><span class="p">)</span>
+
+    <span class="c1"># total energy list</span>
+    <span class="n">e_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># quasi-particle weight z list</span>
+    <span class="n">z_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># double occupancy d list</span>
+    <span class="n">d_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># magnetic moment</span>
+    <span class="n">m_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># loop over the list of U.</span>
+    <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">u_list</span><span class="p">:</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39; working on u = </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">u</span><span class="p">))</span>
+
+        <span class="c1"># modify the local Coulomb matrix of two sites</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s1">&#39;GPARAM.h5&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span>
+                <span class="c1"># note the transposition, which is transformation</span>
+                <span class="c1"># from Fortran convention to c-convention.</span>
+                <span class="n">v2e</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/IMPURITY_</span><span class="si">{}</span><span class="s1">/V2E&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)][()]</span><span class="o">.</span><span class="n">T</span>
+
+                <span class="c1"># now update the Coulom matrix</span>
+                <span class="n">v2e</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">v2e</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">v2e</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">v2e</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span>
+                <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/IMPURITY_</span><span class="si">{}</span><span class="s1">/V2E&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)][()]</span> <span class="o">=</span> <span class="n">v2e</span><span class="o">.</span><span class="n">T</span>
+
+            <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/dc_u_avg&#39;</span><span class="p">][()]</span> <span class="o">=</span> <span class="p">[</span><span class="n">u</span><span class="p">,</span> <span class="n">u</span><span class="p">]</span>
+
+        <span class="c1"># perform the *CyGutz* calculation.</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+
+        <span class="c1"># get total energy</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s1">&#39;GLOG.h5&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/etot_model&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">e_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+
+        <span class="c1"># get Z = R^\dagger R</span>
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s1">&#39;WH_RL_OUT.h5&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/IMPURITY_1/R&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># simple here since it is just a scalar</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">r</span><span class="o">*</span><span class="n">r</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span>
+            <span class="n">z_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+
+        <span class="c1"># if unrestricted HF calculations--</span>
+        <span class="k">if</span> <span class="n">iembeddiag</span> <span class="o">==</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="c1"># in the single-orbital case, double occupancy is simply</span>
+            <span class="c1"># &lt;n_up&gt;_0 &lt;n_dn&gt;_0</span>
+            <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s1">&#39;GLOG.h5&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">nup</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/IMPURITY_1/NKS_SYM&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">ndn</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/IMPURITY_1/NKS_SYM&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="n">nup</span><span class="o">*</span><span class="n">ndn</span>
+                <span class="n">d_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="n">nup</span> <span class="o">-</span> <span class="n">ndn</span>
+                <span class="n">m_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># to get double occupancy (of impurity 1), &lt;n_up n_dn&gt;_G,</span>
+            <span class="c1"># we run analysis code *exe_spci_analysis*</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="n">root</span><span class="o">+</span><span class="s1">&#39;/exe_spci_analysis&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">])</span>
+
+            <span class="c1"># double occupancy is simply the local many-body</span>
+            <span class="c1"># density matrix element in the valence=2 block.</span>
+            <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s1">&#39;EMBED_HAMIL_ANALYSIS_1.h5&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;/valence_block_2/RHO&#39;</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">d</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/valence_block_2/RHO&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">d</span> <span class="o">=</span> <span class="mf">0.</span>
+                <span class="n">d_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s1">&#39;EMBED_HAMIL_RES_1.h5&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="c1"># get the density matrix of the embedding Hamiltonian</span>
+                <span class="c1"># note the first half of the orbotals correspond to</span>
+                <span class="c1"># the physical one-body space</span>
+                <span class="n">nup</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/DM&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+                <span class="n">ndn</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/DM&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="n">nup</span> <span class="o">-</span> <span class="n">ndn</span>
+                <span class="n">m_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+
+    <span class="c1"># save to text file.</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fname</span><span class="o">+</span><span class="s1">&#39;.dat&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">u_list</span><span class="p">,</span> <span class="n">e_list</span><span class="p">,</span> <span class="n">z_list</span><span class="p">,</span> <span class="n">d_list</span><span class="p">,</span> <span class="n">m_list</span><span class="p">):</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
+
+    <span class="c1"># save to hdf5 file.</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">fname</span><span class="o">+</span><span class="s1">&#39;.h5&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/u_list&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">u_list</span>
+        <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/e_list&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e_list</span>
+        <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/z_list&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">z_list</span>
+        <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/d_list&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">d_list</span>
+        <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/m_list&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">m_list</span></div>
+
+
+<div class="viewcode-block" id="scan_u"><a class="viewcode-back" href="../../../../checkboard.html#pygrisb.model.test.scan_checkboard.scan_u">[docs]</a><span class="k">def</span> <span class="nf">scan_u</span><span class="p">(</span><span class="n">spindeg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">iembeddiag</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s1">&#39;result&#39;</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;run *CyGutz* calculations for a list of U.</span>
+
+<span class="sd">    Result:</span>
+
+<span class="sd">    it will generate results for a u_list of np.arange(0.0, 5.1, 0.2).</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fname</span><span class="o">+</span><span class="s1">&#39;.h5&#39;</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="c1"># set range of Hubbard U.</span>
+    <span class="n">u_list</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">generate_data</span><span class="p">(</span><span class="n">u_list</span><span class="p">,</span> <span class="n">spindeg</span><span class="o">=</span><span class="n">spindeg</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">fname</span><span class="p">,</span> <span class="n">iembeddiag</span><span class="o">=</span><span class="n">iembeddiag</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_scan_data</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="s1">&#39;result&#39;</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">fname</span><span class="o">+</span><span class="s1">&#39;.h5&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">u_list</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/u_list&#39;</span><span class="p">][()]</span>
+        <span class="n">e_list</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/e_list&#39;</span><span class="p">][()]</span>
+        <span class="n">z_list</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/z_list&#39;</span><span class="p">][()]</span>
+        <span class="n">d_list</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/d_list&#39;</span><span class="p">][()]</span>
+        <span class="n">m_list</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;/m_list&#39;</span><span class="p">][()]</span>
+
+    <span class="k">return</span> <span class="n">u_list</span><span class="p">,</span> <span class="n">e_list</span><span class="p">,</span> <span class="n">z_list</span><span class="p">,</span> <span class="n">d_list</span><span class="p">,</span> <span class="n">m_list</span>
+
+
+<span class="k">def</span> <span class="nf">plot_scan_u</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="s1">&#39;result&#39;</span><span class="p">):</span>
+    <span class="n">u_list</span><span class="p">,</span> <span class="n">e_list</span><span class="p">,</span> <span class="n">z_list</span><span class="p">,</span> <span class="n">d_list</span><span class="p">,</span> <span class="n">m_list</span> <span class="o">=</span> <span class="n">get_scan_data</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="n">fname</span><span class="p">)</span>
+
+    <span class="n">f</span><span class="p">,</span> <span class="n">axarr</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">u_list</span><span class="p">,</span> <span class="n">e_list</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;energy&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">u_list</span><span class="p">,</span> <span class="n">d_list</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;double occupancy&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">u_list</span><span class="p">,</span> <span class="n">z_list</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">tick_right</span><span class="p">()</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s2">&quot;right&quot;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Z&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">u_list</span><span class="p">,</span> <span class="n">m_list</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;local $&lt;S_</span><span class="si">{z}</span><span class="s1">&gt;$&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">tick_right</span><span class="p">()</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s2">&quot;right&quot;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;U&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;U&#39;</span><span class="p">)</span>
+    <span class="n">axarr</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">u_list</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">u_list</span><span class="p">))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">fname</span><span class="o">+</span><span class="s1">&#39;.png&#39;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span><span class="o">==</span><span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">fname</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
+    <span class="k">if</span> <span class="s1">&#39;-sp&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+        <span class="n">spindeg</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="s1">&#39;result_afm&#39;</span>
+        <span class="n">iembeddiag</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">scan_u</span><span class="p">(</span><span class="n">spindeg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s1">&#39;result_afm&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="s1">&#39;-uhf&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+        <span class="n">spindeg</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="s1">&#39;result_afm_uhf&#39;</span>
+        <span class="n">iembeddiag</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="k">elif</span> <span class="s1">&#39;-rhf&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+        <span class="n">spindeg</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="s1">&#39;result_pm_rhf&#39;</span>
+        <span class="n">iembeddiag</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">spindeg</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="s1">&#39;result_pm&#39;</span>
+        <span class="n">iembeddiag</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span>
+
+    <span class="n">scan_u</span><span class="p">(</span><span class="n">spindeg</span><span class="o">=</span><span class="n">spindeg</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="n">fname</span><span class="p">,</span> <span class="n">iembeddiag</span><span class="o">=</span><span class="n">iembeddiag</span><span class="p">)</span>
+    <span class="n">plot_scan_u</span><span class="p">(</span><span class="n">fname</span><span class="o">=</span><span class="n">fname</span><span class="p">)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">ComRISB totutial 2021.06.24 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pygrisb.model.test.scan_checkboard</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Yongxin Yao.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pygrisb.model.semicir &#8212; ComRISB totutial 2021.06.24 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/classic.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">ComRISB totutial 2021.06.24 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pygrisb.model.semicir</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pygrisb.model.semicir</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Author: Yongxin Yao</span>
+
+<span class="sd">&#39;&#39;&#39;One band with semi-circular dos.</span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">pygrisb.gutz.gparam</span> <span class="k">as</span> <span class="nn">gp</span>
+<span class="kn">import</span> <span class="nn">pygrisb.gutz.atoms</span> <span class="k">as</span> <span class="nn">gatoms</span>
+<span class="kn">import</span> <span class="nn">pygrisb.model.tbASE</span> <span class="k">as</span> <span class="nn">tb</span>
+<span class="kn">import</span> <span class="nn">pygrisb.model.special</span> <span class="k">as</span> <span class="nn">special</span>
+<span class="kn">import</span> <span class="nn">pygrisb.symm.angular_momentum</span> <span class="k">as</span> <span class="nn">am</span>
+
+
+<div class="viewcode-block" id="gutz_model_setup"><a class="viewcode-back" href="../../../bethe_latt.html#pygrisb.model.semicir.gutz_model_setup">[docs]</a><span class="k">def</span> <span class="nf">gutz_model_setup</span><span class="p">(</span>
+        <span class="n">u</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">nmesh</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+        <span class="n">mu</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">iembeddiag</span><span class="o">=-</span><span class="mi">2</span><span class="p">,</span>
+        <span class="n">num_e</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span>  <span class="c1"># electron filling, not referenced for grand canonical model</span>
+        <span class="n">ensemble</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># default: 1, grand canonical mode; else: canonical model</span>
+        <span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Set up Gutzwiller calculations for 1-band model with semi-circular DOS.</span>
+
+<span class="sd">    Parameters:</span>
+
+<span class="sd">    * u: real number</span>
+<span class="sd">      Hubbard U.</span>
+<span class="sd">    * nmesh: interger number</span>
+<span class="sd">      number of energy mesh</span>
+<span class="sd">    * mu: real number</span>
+<span class="sd">      chemical potential</span>
+
+<span class="sd">    Result:</span>
+
+<span class="sd">    Create all the necessary input file of ``GParam.h5``, ``GBareH.h5``</span>
+<span class="sd">    for *CyGutz* calculation.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="c1"># get semi-circular class, predifined in pygrisb.model.special</span>
+    <span class="n">sc</span> <span class="o">=</span> <span class="n">special</span><span class="o">.</span><span class="n">semicircular</span><span class="p">()</span>
+
+    <span class="c1"># get semi-circular energy mesh</span>
+    <span class="n">e_list</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">get_e_list_of_uniform_wt</span><span class="p">(</span><span class="n">nmesh</span><span class="o">=</span><span class="n">nmesh</span><span class="p">)</span>
+
+    <span class="c1"># get atomic structure with 1 atom per unit cell.</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">tb</span><span class="o">.</span><span class="n">AtomsTB</span><span class="p">(</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)],</span> <span class="n">cell</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># specify single s-orbital and orbital dimensions.</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">set_orbitals_spindeg</span><span class="p">(</span><span class="n">orbitals</span><span class="o">=</span><span class="p">[(</span><span class="s1">&#39;s&#39;</span><span class="p">)])</span>
+    <span class="n">norb</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">norb2</span> <span class="o">=</span> <span class="n">norb</span><span class="o">*</span><span class="mi">2</span>
+
+    <span class="c1"># get a list of one-body Hamilonian for the enrgy mesh.</span>
+    <span class="n">hk_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">e</span><span class="o">+</span><span class="mf">0.</span><span class="n">j</span><span class="p">]])</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">e_list</span><span class="p">]</span>
+
+    <span class="c1"># get the tight-binding model</span>
+    <span class="n">aTB</span> <span class="o">=</span> <span class="n">tb</span><span class="o">.</span><span class="n">TB</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">hk_list</span><span class="o">=</span><span class="n">hk_list</span><span class="p">)</span>
+
+    <span class="c1"># here the energy mesh is the same as k-points.</span>
+    <span class="n">kps</span> <span class="o">=</span> <span class="n">e_list</span>
+    <span class="n">num_k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">kps</span><span class="p">)</span>
+
+    <span class="c1"># set uniform k-point weight.</span>
+    <span class="n">kps_wt</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">num_k</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">num_k</span><span class="p">))</span>
+
+    <span class="c1"># Include the spin degeneracy to k-point weight.</span>
+    <span class="k">if</span> <span class="n">aTB</span><span class="o">.</span><span class="n">Atoms</span><span class="o">.</span><span class="n">spindeg</span><span class="p">:</span>
+        <span class="n">kps_wt</span> <span class="o">*=</span> <span class="mi">2</span>
+
+    <span class="c1"># list of one-body part of the local Hamiltonians.</span>
+    <span class="c1"># here the s-orbital is located at zero.</span>
+    <span class="c1"># input is always complex</span>
+    <span class="n">h1e_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">norb</span><span class="p">,</span> <span class="n">norb</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex</span><span class="p">)]</span>
+
+    <span class="c1"># create ``GBareH.h5`` file</span>
+    <span class="n">gbndinfo</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">gparam_bnds</span><span class="p">(</span><span class="n">kps_wt</span><span class="p">,</span>
+            <span class="n">num_e</span><span class="p">,</span>
+            <span class="n">norb</span><span class="p">,</span>
+            <span class="n">ensemble</span><span class="o">=</span><span class="n">ensemble</span><span class="p">,</span>
+            <span class="n">h1e_list</span><span class="o">=</span><span class="n">h1e_list</span><span class="p">,</span>
+            <span class="n">delta</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+    <span class="n">gbndinfo</span><span class="o">.</span><span class="n">h5save</span><span class="p">()</span>
+    <span class="n">aTB</span><span class="o">.</span><span class="n">save_bareham</span><span class="p">(</span><span class="n">kps</span><span class="p">)</span>
+
+    <span class="c1"># prepare ``GParam.h5`` file.</span>
+    <span class="c1"># dummy atom and lattice.</span>
+    <span class="n">gatms</span> <span class="o">=</span> <span class="n">gatoms</span><span class="o">.</span><span class="n">cor_structure</span><span class="p">(</span><span class="n">symbols</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;H&quot;</span><span class="p">],</span> <span class="n">scaled_positions</span><span class="o">=</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]],</span>
+            <span class="n">cell</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">gatms</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s2">&quot;dc_mode&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="s2">&quot;imap_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s2">&quot;na2_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="s2">&quot;iso&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;ispin&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="s2">&quot;db2sab_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex</span><span class="p">)],</span>
+            <span class="s2">&quot;symbol_matrix_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)],</span>
+            <span class="s2">&quot;dc_u_avg_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.</span><span class="p">],</span>
+            <span class="s2">&quot;dc_j_avg_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.</span><span class="p">],</span>
+            <span class="s2">&quot;giembeddiag&quot;</span><span class="p">:</span> <span class="n">iembeddiag</span><span class="p">,</span>
+            <span class="s2">&quot;nval_bot_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s2">&quot;nval_top_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+            <span class="p">})</span>
+
+    <span class="c1"># set Coulomb matrix</span>
+    <span class="n">v2e</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">norb2</span><span class="p">,</span><span class="n">norb2</span><span class="p">,</span><span class="n">norb2</span><span class="p">,</span><span class="n">norb2</span><span class="p">))</span>
+    <span class="n">v2e</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">v2e</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">v2e</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">v2e</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span>
+    <span class="n">gatms</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;v2e_list&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">v2e</span><span class="p">]})</span>
+    <span class="c1"># local single-particle matrix basis.</span>
+    <span class="n">gatms</span><span class="o">.</span><span class="n">set_matrix_basis_list</span><span class="p">(</span><span class="n">realhemb</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># spin operator</span>
+    <span class="n">samop</span> <span class="o">=</span> <span class="n">am</span><span class="o">.</span><span class="n">samop_csh2</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">s_vec</span> <span class="o">=</span> <span class="n">samop</span><span class="o">.</span><span class="n">am_op</span>
+    <span class="n">gatms</span><span class="o">.</span><span class="n">set_s_vec_csh2_list</span><span class="p">([</span><span class="n">s_vec</span><span class="p">])</span>
+    <span class="n">gatms</span><span class="o">.</span><span class="n">set_sl_vector_sab_list</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;sz_only&quot;</span><span class="p">)</span>
+    <span class="n">gpa</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">gparam_atms</span><span class="p">(</span><span class="n">gatms</span><span class="o">.</span><span class="n">ps</span><span class="p">[</span><span class="s2">&quot;na2_list&quot;</span><span class="p">],</span> <span class="n">gatms</span><span class="o">.</span><span class="n">ps</span><span class="p">)</span>
+    <span class="n">gpa</span><span class="o">.</span><span class="n">h5save</span><span class="p">()</span>
+
+    <span class="c1"># set the potential shift such that the system has particle-hole</span>
+    <span class="c1"># symmetry with recpect to zero.</span>
+    <span class="c1"># also include chemical potential here.</span>
+    <span class="n">vext_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">norb2</span><span class="p">,</span> <span class="n">norb2</span><span class="p">))]</span>
+    <span class="n">vext_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">vext_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">u</span><span class="o">/</span><span class="mi">2</span>
+    <span class="n">gpa</span><span class="o">.</span><span class="n">add_vext_list</span><span class="p">(</span><span class="n">vext_list</span><span class="p">)</span>
+    <span class="c1"># update mu or ef</span>
+    <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="s2">&quot;GBareH.h5&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="p">[</span><span class="s2">&quot;/&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s2">&quot;chempot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mu</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">gutz_model_setup</span><span class="p">(</span><span class="n">u</span><span class="o">=</span><span class="mf">2.</span><span class="p">)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">ComRISB totutial 2021.06.24 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pygrisb.model.semicir</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Yongxin Yao.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.2.
+    </div>
+  </body>
+</html>
